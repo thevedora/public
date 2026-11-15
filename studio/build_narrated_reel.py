@@ -1,6 +1,7 @@
 """Assemble a narrated Vedora shloka Reel.
 
-python3 build_narrated_reel.py content.json out.mp4 sanskrit1.wav sanskrit2.wav hindi.wav [english.wav]
+python3 build_narrated_reel.py content.json out.mp4 [hook.wav] sanskrit1.wav sanskrit2.wav hindi.wav [english.wav]
+(hook.wav is expected exactly when content.json has a \"hook\")
 
 content.json holds the on-screen text (ref, sanskrit[2], hindi[2], english[2], takeaway). Narration clips are
 trimmed, laid out with pauses, the on-screen text is timed to them, the calm music bed is ducked under the voice,
@@ -34,18 +35,25 @@ def main(content_path, out, *clips):
             "silenceremove=start_periods=1:start_threshold=-45dB:start_silence=0.08,areverse,"
             "afade=t=in:d=0.02,aresample=48000", "-ac", "1", str(t))
         trimmed.append((t, duration(t)))
-    # 2. timeline: lead, gaps between lines, tail
-    gaps = [0.5, 0.9, 0.7]
-    starts, t = [], 0.8
+    # 2. timeline: [hook], sanskrit 1, sanskrit 2, hindi, [english] with pauses between
+    k = 1 if content.get("hook") else 0           # index of the first Sanskrit clip
+    gaps = ([1.0] if k else []) + [0.5, 0.9, 0.7]
+    starts, t = [], 0.8 if not k else 0.4
     for i, (_, d) in enumerate(trimmed):
         starts.append(t); t += d + (gaps[i] if i < len(gaps) else 0)
     end = starts[-1] + trimmed[-1][1]
-    st = lambda i: starts[i] if i < len(starts) else end
-    dur = lambda i: trimmed[i][1] if i < len(trimmed) else 0
-    times = dict(ref=0.2, s1=st(0) - 0.15, s2=st(1) - 0.15, divider=st(2) - 0.6, h1=st(2) - 0.1,
-                 h2=st(2) + dur(2) * 0.5)
-    if len(trimmed) > 3:                 # English is narrated too
-        times.update(e1=st(3) - 0.1, e2=st(3) + dur(3) * 0.5, take=end + 0.3); total = round(end + 3.0, 2)
+    st = lambda i: starts[i]
+    dur = lambda i: trimmed[i][1]
+    times = {}
+    if k:
+        hook_end = st(0) + dur(0)
+        times.update(hook_in=0.15, hook_sub=st(0) + dur(0) * 0.68, hook_out=hook_end + 0.25, ref=hook_end + 0.6)
+    else:
+        times.update(hook_in=0, hook_sub=0, hook_out=0, ref=0.2)
+    times.update(s1=st(k) - 0.15, s2=st(k + 1) - 0.15, divider=st(k + 2) - 0.6, h1=st(k + 2) - 0.1,
+                 h2=st(k + 2) + dur(k + 2) * 0.5)
+    if len(trimmed) > k + 3:             # English is narrated too
+        times.update(e1=st(k + 3) - 0.1, e2=st(k + 3) + dur(k + 3) * 0.5, take=end + 0.3); total = round(end + 3.0, 2)
     else:                                # English shown as text only: give it reading time after the voice ends
         times.update(e1=end + 0.2, e2=end + 0.5, take=end + 1.8); total = round(end + 4.6, 2)
     content.update(times=times, duration=total)

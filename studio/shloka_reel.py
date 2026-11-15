@@ -9,7 +9,7 @@ INTRO = 0.0
 SCENE = 12.0
 # When each element starts to appear (seconds). Override with "times" (and "duration") in VEDORA_CONTENT
 # to sync with a narration track.
-TIMES = dict(ref=0.3, s1=0.8, s2=1.4, divider=2.2, h1=2.6, h2=2.9, e1=3.8, e2=4.1, take=5.2)
+TIMES = dict(hook_in=0.2, hook_sub=1.5, hook_out=3.0, ref=0.3, s1=0.8, s2=1.4, divider=2.2, h1=2.6, h2=2.9, e1=3.8, e2=4.1, take=5.2)
 DUR = INTRO + SCENE
 DEV = 'font-family="FreeSans"'
 SANS = 'font-family="Inter, sans-serif"'
@@ -64,6 +64,15 @@ def scene_frame(s):
     o.append(f'<text x="540" y="250" text-anchor="middle" {SANS} font-size="30" font-weight="500" letter-spacing="6" fill="#E2C27E" opacity="{0.85 * eo(prog(s, 0.0, 1.0)):.3f}">@the_vedora</text>')
     tin = lambda key, d=0.6: eo(prog(s, TIMES[key], TIMES[key] + d))
     c = CONTENT
+    if c.get("hook"):                     # opening hook: big centred question, fades out before the shloka
+        out = 1 - eo(prog(s, TIMES["hook_out"], TIMES["hook_out"] + 0.5))
+        if out > 0:
+            hl = c["hook"]; y0 = 900 - 45 * (len(hl) - 1)
+            for i, line in enumerate(hl):
+                fill = "url(#gold)" if i == len(hl) - 1 else "#F3DDB0"
+                o.append(text(y0 + 92 * i, line, 62, DEV, fill, tin("hook_in", 0.7) * out, "bold"))
+            if c.get("hook_sub"):
+                o.append(text(y0 + 92 * len(hl) + 40, c["hook_sub"], 40, DEV, "#E2C27E", tin("hook_sub") * out))
     o.append(text(640, c["ref"], 40, DEV, "#F3DDB0", tin("ref"), "bold", ls=1))
     o.append(text(770, c["sanskrit"][0], 54, DEV, "url(#gold)", tin("s1"), "bold"))
     o.append(text(855, c["sanskrit"][1], 54, DEV, "url(#gold)", tin("s2"), "bold"))

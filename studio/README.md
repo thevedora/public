@@ -13,6 +13,7 @@ Fonts: **FreeSans** for all Devanagari (FreeSerif breaks conjuncts), Inter for E
 | `music_welcome.py` | Upbeat welcome music (santoor, bansuri, tabla, conch, bells) |
 | `vedora_tts.py` | Free narration in the owner's cloned voice (ai4bharat/IndicF5, MIT). Needs `HF_TOKEN` env var and the voice sample from the PRIVATE repo. `0.78|text` = slower Sanskrit recitation. Hindi/Sanskrit only — English comes out broken, keep it on-screen |
 | `build_narrated_reel.py` | Trims narration clips, times the on-screen text to them, ducks `music_bed.py` under the voice, outputs the Reel at about −14 LUFS |
+| `story_reel.py` + `build_story_reel.py` | Narrated story Reel: hook with echo, subtitles timed to narration, cold→warm mood at the Gita verse, checklist, takeaway, end card. Script format: see `scripts/toxic_boss_6-5.json`. `VEDORA_TEMPO=1.1 VEDORA_GAP_SCALE=0.75` tightens long Reels |
 | `emblem.svgfrag` | The lotus-and-diya emblem paths |
 
 Render a Reel: render frame ranges in parallel (`render 0 120 a.mp4`, `120 240 b.mp4`, …), join with the ffmpeg concat demuxer `-c copy`, then add audio with `-c:v copy`, loudness ≈ −14 LUFS.

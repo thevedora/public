@@ -11,8 +11,12 @@ Fonts: **FreeSans** for all Devanagari (FreeSerif breaks conjuncts), Inter for E
 | `anim.py` | Welcome Reel animation (lotus bloom → diya lights → wordmark); also supplies shared shapes |
 | `music_bed.py` | Calm santoor + drone bed for narrated Reels → `shloka_bed.wav` |
 | `music_welcome.py` | Upbeat welcome music (santoor, bansuri, tabla, conch, bells) |
+| `vedora_tts.py` | Free narration in the owner's cloned voice (ai4bharat/IndicF5, MIT). Needs `HF_TOKEN` env var and the voice sample from the PRIVATE repo. `0.78|text` = slower Sanskrit recitation. Hindi/Sanskrit only — English comes out broken, keep it on-screen |
+| `build_narrated_reel.py` | Trims narration clips, times the on-screen text to them, ducks `music_bed.py` under the voice, outputs the Reel at about −14 LUFS |
 | `emblem.svgfrag` | The lotus-and-diya emblem paths |
 
 Render a Reel: render frame ranges in parallel (`render 0 120 a.mp4`, `120 240 b.mp4`, …), join with the ffmpeg concat demuxer `-c copy`, then add audio with `-c:v copy`, loudness ≈ −14 LUFS.
 Publishing: upload media to `media/YYYY-MM/` in this repo, then schedule in Metricool (brand id 8126323) with the raw.githubusercontent.com URL.
 Facts: verify every shloka against a standard Gita source and every festival date against Drik Panchang (India) before posting.
+
+Narration setup (CPU): `pip install torch torchaudio --index-url https://download.pytorch.org/whl/cpu`, then `pip install git+https://github.com/ai4bharat/IndicF5.git`, then `pip install "numpy>=2.1"` (IndicF5 pins an old numpy that breaks pyarrow). About 3 minutes of CPU per narrated line on 2 cores.

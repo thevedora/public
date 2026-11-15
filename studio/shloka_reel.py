@@ -7,7 +7,9 @@ from anim import W, H, FPS, clamp, prog, eo, eio, lerp, DEFS, PARTS, P_OUT_L, P_
 
 INTRO = 0.0
 SCENE = 12.0
-SHIFT = 0.8            # text appears this much earlier than in the intro version
+# When each element starts to appear (seconds). Override with "times" (and "duration") in VEDORA_CONTENT
+# to sync with a narration track.
+TIMES = dict(ref=0.3, s1=0.8, s2=1.4, divider=2.2, h1=2.6, h2=2.9, e1=3.8, e2=4.1, take=5.2)
 DUR = INTRO + SCENE
 DEV = 'font-family="FreeSans"'
 SANS = 'font-family="Inter, sans-serif"'
@@ -22,6 +24,9 @@ CONTENT = dict(
 
 if os.environ.get("VEDORA_CONTENT"):
     CONTENT.update(json.load(open(os.environ["VEDORA_CONTENT"], encoding="utf-8")))
+    TIMES.update(CONTENT.get("times", {}))
+    SCENE = float(CONTENT.get("duration", SCENE))
+    DUR = INTRO + SCENE
 
 def lit_emblem(ta, cy, sc):
     """Fully bloomed, lit emblem with ring, as at the end of the intro. ta = animation clock."""
@@ -57,20 +62,20 @@ def scene_frame(s):
         x = x0 + 14 * math.sin(ta * 0.8 + ph)
         o.append(f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{r:.1f}" fill="#F6D27A" opacity="{a * (0.55 + 0.45 * math.sin(ta * 2.2 + ph)):.3f}"/>')
     o.append(f'<text x="540" y="250" text-anchor="middle" {SANS} font-size="30" font-weight="500" letter-spacing="6" fill="#E2C27E" opacity="{0.85 * eo(prog(s, 0.0, 1.0)):.3f}">@the_vedora</text>')
-    tin = lambda t0, d=0.8: eo(prog(s, t0 - SHIFT, t0 - SHIFT + d))
+    tin = lambda key, d=0.6: eo(prog(s, TIMES[key], TIMES[key] + d))
     c = CONTENT
-    o.append(text(640, c["ref"], 40, DEV, "#F3DDB0", tin(1.1), "bold", ls=1))
-    o.append(text(770, c["sanskrit"][0], 54, DEV, "url(#gold)", tin(1.6), "bold"))
-    o.append(text(855, c["sanskrit"][1], 54, DEV, "url(#gold)", tin(2.2), "bold"))
-    ln = eio(prog(s, 3.0, 3.7))
+    o.append(text(640, c["ref"], 40, DEV, "#F3DDB0", tin("ref"), "bold", ls=1))
+    o.append(text(770, c["sanskrit"][0], 54, DEV, "url(#gold)", tin("s1"), "bold"))
+    o.append(text(855, c["sanskrit"][1], 54, DEV, "url(#gold)", tin("s2"), "bold"))
+    ln = eio(prog(s, TIMES["divider"], TIMES["divider"] + 0.7))
     if ln > 0:
         o.append(f'<line x1="{540 - 170 * ln:.1f}" y1="930" x2="{540 + 170 * ln:.1f}" y2="930" stroke="#E8B04B" stroke-width="2" opacity="0.7"/>'
                  f'<path d="M540,921 L549,930 L540,939 L531,930 Z" fill="#E8B04B" opacity="{ln:.3f}"/>')
-    o.append(text(1030, c["hindi"][0], 42, DEV, "#F3DDB0", tin(3.4)))
-    o.append(text(1092, c["hindi"][1], 42, DEV, "#F3DDB0", tin(3.7)))
-    o.append(text(1190, c["english"][0], 34, SANS, "#E2C27E", tin(4.6), "300", "italic"))
-    o.append(text(1240, c["english"][1], 34, SANS, "#E2C27E", tin(4.9), "300", "italic"))
-    a = tin(6.0)
+    o.append(text(1030, c["hindi"][0], 42, DEV, "#F3DDB0", tin("h1")))
+    o.append(text(1092, c["hindi"][1], 42, DEV, "#F3DDB0", tin("h2")))
+    o.append(text(1190, c["english"][0], 34, SANS, "#E2C27E", tin("e1"), "300", "italic"))
+    o.append(text(1240, c["english"][1], 34, SANS, "#E2C27E", tin("e2"), "300", "italic"))
+    a = tin("take")
     if a > 0:
         o.append(f'<g opacity="{a:.3f}" transform="translate(0,{18 * (1 - a):.1f})">'
                  f'<rect x="120" y="1320" width="840" height="96" rx="48" fill="#E8B04B" fill-opacity="0.12" stroke="#E8B04B" stroke-width="2" stroke-opacity="0.7"/>'

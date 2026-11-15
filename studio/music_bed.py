@@ -1,8 +1,9 @@
+import os
 import numpy as np
 from scipy.signal import butter, sosfilt, fftconvolve
 from scipy.io import wavfile
 
-SR, DUR = 48000, 12.0
+SR, DUR = 48000, float(os.environ.get("VEDORA_DURATION", 12.0))
 N = int(SR * DUR)
 BEAT = 60 / 96          # 96 BPM
 E8 = BEAT / 2
@@ -111,13 +112,13 @@ def flute(notes, t_start):
 
 CH = {"D": ["D4", "Fs4", "A4", "D5", "Fs5", "A5"], "G": ["G3", "B3", "D4", "G4", "B4", "D5"],
       "Bm": ["B3", "D4", "Fs4", "B4", "D5", "Fs5"], "A": ["A3", "Cs4", "E4", "A4", "Cs5", "E5"]}
-PROG = [("D", "D2"), ("G", "G2"), ("Bm", "B2"), ("A", "A2"), ("D", "D2")]
+PROG = ([("D", "D2"), ("G", "G2"), ("Bm", "B2"), ("A", "A2")] * 10)[: int(DUR / (4 * BEAT)) + 1]
 PAT = [0, 2, 3, 2]
 for bar, (ch, root) in enumerate(PROG):
     t_bar = bar * 4 * BEAT
     for i, idx in enumerate(PAT):
         t = t_bar + i * BEAT + 0.3
-        if t > 11.0: continue
+        if t > DUR - 1.0: continue
         sig = santoor(NOTE[CH[ch][idx]], 2.0)
         dry.add(sig, t, 0.22, -0.3 + 0.2 * i); wet.add(sig, t, 0.2, -0.3 + 0.2 * i)
     dry.add(bass(NOTE[root], 4 * BEAT), t_bar, 0.16)
@@ -136,5 +137,5 @@ mix /= np.max(np.abs(mix))
 mix = np.tanh(1.1 * mix) / np.tanh(1.1)                      # gentle glue / loudness
 mix *= np.clip((DUR - t) / 1.0, 0, 1)[:, None] * np.clip(t / 0.05, 0, 1)[:, None]
 mix *= 0.89 / np.max(np.abs(mix))
-wavfile.write("shloka_bed.wav", SR, (mix * 32767).astype(np.int16))
+wavfile.write(os.environ.get("VEDORA_MUSIC_OUT", "shloka_bed.wav"), SR, (mix * 32767).astype(np.int16))
 print("done")
